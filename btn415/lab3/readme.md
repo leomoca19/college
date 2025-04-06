@@ -74,3 +74,11 @@ https://support.google.com/accounts/answer/185833?hl=en
 
 ---
 
+## Demonstration
+**If you run the file as is**
+![default run](img/defaultrun.png)
+![default config](img/defaultconfig.png)
+
+**If your config is correct**
+![good run](img/goodrun.png)
+
