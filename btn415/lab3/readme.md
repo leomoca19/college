@@ -69,7 +69,8 @@ A standalone Windows executable for sending emails with attachments via Gmail’
 No—`client.exe` is pre‑built. Just configure and run.
 
 **How do I generate an App Password?**  
-In Google Account → Security → App passwords → select Mail + Other → Generate.
+Visit this forum from google and follow their instructions to generate your app password
+https://support.google.com/accounts/answer/185833?hl=en
 
 ---
 
