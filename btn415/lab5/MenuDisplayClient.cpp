@@ -22,19 +22,22 @@ int main() {
     servAddr.sin_addr.s_addr = inet_addr(SERVER_ADDRESS);
 
     // Connect to server
-    connect(clientSocket, (struct sockaddr*)&servAddr, sizeof(servAddr));
+    if (0 == connect(clientSocket, (struct sockaddr*)&servAddr, sizeof(servAddr))) {
+        // Display menu
+        std::cout << "Choose an option:\n1. Coffee\n2. Tea\nEnter your choice: ";
+        std::string choice;
+        std::cin >> choice;
 
-    // Display menu
-    std::cout << "Choose an option:\n1. Coffee\n2. Tea\nEnter your choice: ";
-    std::string choice;
-    std::cin >> choice;
+        // Send choice to server
+        send(clientSocket, choice.c_str(), choice.length(), 0);
 
-    // Send choice to server
-    send(clientSocket, choice.c_str(), choice.length(), 0);
-
-    // Receive and display response
-    recv(clientSocket, buffer, 1024, 0);
-    std::cout << "Server Response: " << buffer << std::endl;
+        // Receive and display response
+        recv(clientSocket, buffer, 1024, 0);
+        std::cout << "Server Response: " << buffer << std::endl;
+    }
+    else {
+        std::cerr << "connect() failed, errror: " << WSAGetLastError() << std::endl;
+    }
 
     // Close socket
     closesocket(clientSocket);
