@@ -1,0 +1,7 @@
+sender
+your_email@gmail.com
+password
+<16‑char App Password>
+receivers
+to_address1@example.com
+to_address2@example.come
