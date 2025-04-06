@@ -3,11 +3,22 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <string>
+#include "base64.h"
 
 #pragma comment(lib, "ws2_32.lib")
 #pragma comment(lib, "libssl.lib")
 #pragma comment(lib, "libcrypto.lib")
+
+std::string getFileContent(const char* fname){
+    std::ifstream file(fname, std::ios::binary);
+    std::ostringstream content;
+    content << file.rdbuf();
+    file.close();
+    return content.str();
+}
 
 void sendSMTPCommand(SSL* ssl, const std::string& command, const std::string& expectedResponse) {
     SSL_write(ssl, command.c_str(), command.size());
@@ -32,12 +43,12 @@ int main() {
     const int smtpPort = 465; // SMTP over SSL
 
     // Sender credentials
-    const std::string emailSender = "your_email@gmail.com";
-    const std::string emailPassword = "your_email_password";
-    const std::string emailReceiver = "receiver_email@gmail.com";
+    const std::string emailSender = "leomoca19@gmail.com";
+    const std::string emailPassword = "bztxvrmbwripjfml";
+    const std::string emailReceiver = "leomoca19@gmail.com";
 
     const std::string subject = "Test Email from Winsock C++";
-    const std::string body = "This is a test email sent using Winsock and OpenSSL.";
+    const std::string body = "Test email with attachments";
 
     try {
         // Create socket
@@ -91,15 +102,50 @@ int main() {
         std::string base64Email = base64_encode(reinterpret_cast<const unsigned char*>(emailSender.c_str()), emailSender.size());
         std::string base64Password = base64_encode(reinterpret_cast<const unsigned char*>(emailPassword.c_str()), emailPassword.size());
 
+        // Read and encode attachment from file
+        const char* fname = "email-attach.txt";
+        std::string fileData = getFileContent(fname);
+        std::string fileB64 = base64_encode(reinterpret_cast<const unsigned char*>(fileData.c_str()), fileData.size());
+
         sendSMTPCommand(ssl, base64Email + "\r\n", "334");
         sendSMTPCommand(ssl, base64Password + "\r\n", "235");
 
+        // Splitting file's data into 76 chars because MIME requires this length to interpret data correctly
+        std::string attachment;
+        for (size_t i = 0; i < fileB64.size(); i += 76)
+            attachment += fileB64.substr(i, 76) += "\r\n\r\n";
+
+        // attachment MIME formatted
+        const char* boundary = "------------";
+        std::ostringstream attachmentMIME;
+        attachmentMIME
+        << "--" << boundary << "\r\n"
+        << "Content-Type: application/octet-stream; name=\"" << fname << "\"\r\n" 
+        << "Content-Transfer-Encoding: base64\r\n"
+        << "Content-Disposition: attachment; filename=\"" << fname << "\"\r\n\r\n"
+        << attachment << "\r\n"
+        << "--" << boundary << "--\r\n";
+
+
+        // Compose email's "meat" following MIME's format
+        std::string emailContent = 
+            // declare headers and multipart
+            "Subject: " + subject + "\r\n" 
+            "MIME-Version: 1.0\r\n"
+            "Content-Type: multipart/mixed; boundary=\"" + boundary + "\"\r\n\r\n"
+            // declare text type
+            "--" + boundary + "\r\n"
+            "Content-Type: text/plain; charset=utf-8\r\n"
+            "Content-Transfer-Encoding: 7bit\r\n\r\n"
+            + body + "\r\n\r\n"
+            + attachmentMIME.str()
+            // end of data
+            + ".\r\n";
+        
         // Send email
         sendSMTPCommand(ssl, "MAIL FROM:<" + emailSender + ">\r\n", "250");
         sendSMTPCommand(ssl, "RCPT TO:<" + emailReceiver + ">\r\n", "250");
         sendSMTPCommand(ssl, "DATA\r\n", "354");
-
-        std::string emailContent = "Subject: " + subject + "\r\n\r\n" + body + "\r\n.\r\n";
         sendSMTPCommand(ssl, emailContent, "250");
 
         // Quit
