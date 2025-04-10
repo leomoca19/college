@@ -1,3 +1,6 @@
 [submodule "btn415/project"]
 	path = btn415/project
 	url = https://github.com/itzzuy/project.git
+[submodule "btn415/activity-3-glhf"]
+	path = btn415/activity-3-glhf
+	url = https://github.com/btp405-w25/activity-3-glhf.git
